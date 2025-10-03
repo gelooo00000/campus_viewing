@@ -1,0 +1,602 @@
+import * as React from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { Badge } from "./ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  User, 
+  GraduationCap,
+  Award,
+  Search
+} from "lucide-react";
+import { toast } from "sonner";
+
+interface Faculty {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  office: string;
+  department: string;
+  title: string;
+  status: string;
+  bio: string;
+  specializations: string[];
+  education: string[];
+  awards: string[];
+  profileImage?: string;
+  officeHours: string;
+  website?: string;
+}
+
+const mockFaculty: Faculty[] = [
+  {
+    id: "1",
+    firstName: "Dr. Sarah",
+    lastName: "Johnson",
+    email: "s.johnson@university.edu",
+    phone: "(555) 123-4567",
+    office: "Science Building 301",
+    department: "Computer Science",
+    title: "Professor",
+    status: "Active",
+    bio: "Dr. Johnson specializes in artificial intelligence and machine learning research with over 15 years of experience in the field.",
+    specializations: ["Artificial Intelligence", "Machine Learning", "Data Science"],
+    education: ["Ph.D. Computer Science - MIT", "M.S. Computer Science - Stanford"],
+    awards: ["Excellence in Teaching Award 2023", "Research Innovation Grant 2022"],
+    officeHours: "Mon/Wed 2-4 PM",
+    website: "https://cs.university.edu/faculty/johnson"
+  },
+  {
+    id: "2",
+    firstName: "Prof. Michael",
+    lastName: "Chen",
+    email: "m.chen@university.edu",
+    phone: "(555) 234-5678",
+    office: "Business Building 205",
+    department: "Business Administration",
+    title: "Associate Professor",
+    status: "Active",
+    bio: "Professor Chen focuses on international business strategy and has consulted for Fortune 500 companies worldwide.",
+    specializations: ["International Business", "Strategic Management", "Corporate Finance"],
+    education: ["Ph.D. Business Administration - Harvard", "MBA - Wharton"],
+    awards: ["Outstanding Faculty Award 2021"],
+    officeHours: "Tue/Thu 1-3 PM"
+  },
+  {
+    id: "3",
+    firstName: "Dr. Emily",
+    lastName: "Rodriguez",
+    email: "e.rodriguez@university.edu",
+    phone: "(555) 345-6789",
+    office: "Arts Building 102",
+    department: "Psychology",
+    title: "Assistant Professor",
+    status: "On Leave",
+    bio: "Dr. Rodriguez researches cognitive psychology and human behavior, with a focus on memory and learning processes.",
+    specializations: ["Cognitive Psychology", "Memory Research", "Learning Sciences"],
+    education: ["Ph.D. Psychology - UCLA", "M.A. Psychology - UC Berkeley"],
+    awards: [],
+    officeHours: "Currently on sabbatical"
+  }
+];
+
+const departments = [
+  "Computer Science", "Business Administration", "Psychology", "Engineering", 
+  "Mathematics", "English", "Biology", "Chemistry", "Physics", "Art", "Music"
+];
+
+const titles = [
+  "Professor", "Associate Professor", "Assistant Professor", "Lecturer", 
+  "Adjunct Professor", "Professor Emeritus", "Research Professor"
+];
+
+const statuses = ["Active", "On Leave", "Sabbatical", "Retired", "Inactive"];
+
+export default function FacultyManager() {
+  const [faculty, setFaculty] = useState<Faculty[]>(mockFaculty);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("all");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    office: "",
+    department: "",
+    title: "",
+    status: "Active",
+    bio: "",
+    specializations: "",
+    education: "",
+    awards: "",
+    officeHours: "",
+    website: ""
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const facultyData = {
+      ...formData,
+      specializations: formData.specializations.split(',').map(s => s.trim()).filter(s => s),
+      education: formData.education.split('\n').filter(e => e.trim()),
+      awards: formData.awards.split('\n').filter(a => a.trim())
+    };
+
+    if (editingFaculty) {
+      // Update existing faculty
+      const updatedFaculty = faculty.map(f => 
+        f.id === editingFaculty.id 
+          ? { ...f, ...facultyData }
+          : f
+      );
+      setFaculty(updatedFaculty);
+      toast.success("Faculty profile updated successfully!");
+    } else {
+      // Create new faculty
+      const newFaculty: Faculty = {
+        id: Date.now().toString(),
+        ...facultyData
+      };
+      setFaculty([newFaculty, ...faculty]);
+      toast.success("Faculty profile created successfully!");
+    }
+    
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      office: "",
+      department: "",
+      title: "",
+      status: "Active",
+      bio: "",
+      specializations: "",
+      education: "",
+      awards: "",
+      officeHours: "",
+      website: ""
+    });
+    setEditingFaculty(null);
+    setIsCreateDialogOpen(false);
+  };
+
+  const handleEdit = (facultyMember: Faculty) => {
+    setEditingFaculty(facultyMember);
+    setFormData({
+      firstName: facultyMember.firstName,
+      lastName: facultyMember.lastName,
+      email: facultyMember.email,
+      phone: facultyMember.phone,
+      office: facultyMember.office,
+      department: facultyMember.department,
+      title: facultyMember.title,
+      status: facultyMember.status,
+      bio: facultyMember.bio,
+      specializations: facultyMember.specializations.join(', '),
+      education: facultyMember.education.join('\n'),
+      awards: facultyMember.awards.join('\n'),
+      officeHours: facultyMember.officeHours,
+      website: facultyMember.website || ""
+    });
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setFaculty(faculty.filter(f => f.id !== id));
+    toast.success("Faculty profile deleted successfully!");
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Active":
+        return "bg-green-100 text-green-800";
+      case "On Leave":
+        return "bg-orange-100 text-orange-800";
+      case "Sabbatical":
+        return "bg-blue-100 text-blue-800";
+      case "Retired":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`;
+  };
+
+  const filteredFaculty = faculty.filter(f => {
+    const matchesSearch = `${f.firstName} ${f.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         f.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         f.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = !filterDepartment || filterDepartment === "all" || f.department === filterDepartment;
+    return matchesSearch && matchesDepartment;
+  });
+
+  const departmentStats = departments.map(dept => ({
+    name: dept,
+    count: faculty.filter(f => f.department === dept).length
+  })).filter(stat => stat.count > 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Faculty & Staff Management</h2>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Faculty Member
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingFaculty ? "Edit Faculty Profile" : "Add New Faculty Member"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="department">Department</Label>
+                  <Select value={formData.department} onValueChange={(value) => setFormData({...formData, department: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Select value={formData.title} onValueChange={(value) => setFormData({...formData, title: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select title" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {titles.map(title => (
+                        <SelectItem key={title} value={title}>{title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="office">Office Location</Label>
+                  <Input
+                    id="office"
+                    value={formData.office}
+                    onChange={(e) => setFormData({...formData, office: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="officeHours">Office Hours</Label>
+                  <Input
+                    id="officeHours"
+                    value={formData.officeHours}
+                    onChange={(e) => setFormData({...formData, officeHours: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="bio">Biography</Label>
+                <Textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="specializations">Specializations (comma-separated)</Label>
+                <Input
+                  id="specializations"
+                  value={formData.specializations}
+                  onChange={(e) => setFormData({...formData, specializations: e.target.value})}
+                  placeholder="AI, Machine Learning, Data Science"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="education">Education (one per line)</Label>
+                <Textarea
+                  id="education"
+                  value={formData.education}
+                  onChange={(e) => setFormData({...formData, education: e.target.value})}
+                  rows={3}
+                  placeholder="Ph.D. Computer Science - MIT&#10;M.S. Computer Science - Stanford"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="awards">Awards & Recognition (one per line)</Label>
+                <Textarea
+                  id="awards"
+                  value={formData.awards}
+                  onChange={(e) => setFormData({...formData, awards: e.target.value})}
+                  rows={2}
+                  placeholder="Excellence in Teaching Award 2023&#10;Research Innovation Grant 2022"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="website">Website (optional)</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => setFormData({...formData, website: e.target.value})}
+                />
+              </div>
+              
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingFaculty ? "Update" : "Add"} Faculty Member
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search faculty by name, department, or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Filter by department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Departments</SelectItem>
+            {departments.map(dept => (
+              <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid lg:grid-cols-4 gap-6">
+        {/* Faculty List */}
+        <div className="lg:col-span-3 space-y-4">
+          {filteredFaculty.map((facultyMember) => (
+            <Card key={facultyMember.id}>
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={facultyMember.profileImage} />
+                    <AvatarFallback>
+                      {getInitials(facultyMember.firstName, facultyMember.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <CardTitle className="text-xl">
+                          {facultyMember.firstName} {facultyMember.lastName}
+                        </CardTitle>
+                        <p className="text-muted-foreground">{facultyMember.title}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(facultyMember.status)}>
+                          {facultyMember.status}
+                        </Badge>
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(facultyMember)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(facultyMember.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-3">
+                      <div className="flex items-center gap-1">
+                        <GraduationCap className="w-4 h-4" />
+                        <span>{facultyMember.department}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Mail className="w-4 h-4" />
+                        <span>{facultyMember.email}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Phone className="w-4 h-4" />
+                        <span>{facultyMember.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        <span>{facultyMember.office}</span>
+                      </div>
+                    </div>
+                    {facultyMember.specializations.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {facultyMember.specializations.map((spec, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {spec}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">{facultyMember.bio}</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {facultyMember.education.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-1">
+                        <GraduationCap className="w-4 h-4" />
+                        Education
+                      </h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {facultyMember.education.map((edu, index) => (
+                          <li key={index}>• {edu}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {facultyMember.awards.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 flex items-center gap-1">
+                        <Award className="w-4 h-4" />
+                        Awards & Recognition
+                      </h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {facultyMember.awards.map((award, index) => (
+                          <li key={index}>• {award}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                {facultyMember.officeHours && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                    <span className="font-semibold text-sm">Office Hours: </span>
+                    <span className="text-sm">{facultyMember.officeHours}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Department Statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Department Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {departmentStats.map((stat) => (
+                <div key={stat.name} className="flex justify-between items-center">
+                  <span className="text-sm">{stat.name}</span>
+                  <Badge variant="secondary">{stat.count}</Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Faculty Statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Faculty Statistics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm">Total Faculty</span>
+                <span className="font-semibold">{faculty.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Active</span>
+                <span className="font-semibold">{faculty.filter(f => f.status === "Active").length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">On Leave</span>
+                <span className="font-semibold">{faculty.filter(f => f.status === "On Leave" || f.status === "Sabbatical").length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Professors</span>
+                <span className="font-semibold">{faculty.filter(f => f.title.includes("Professor")).length}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
