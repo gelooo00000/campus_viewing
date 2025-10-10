@@ -4,6 +4,9 @@ import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { BookOpen, Users, Award, TrendingUp } from "lucide-react";
+import CampusImg from "../assets/BulanCampus.jpg"; 
+
+
 
 export default function HeroSection() {
   return (
@@ -62,9 +65,9 @@ export default function HeroSection() {
           <div className="relative">
             <Card className="overflow-hidden">
               <ImageWithFallback 
-                src="https://images.unsplash.com/photo-1616428394230-ba242d33e3ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwY2FtcHVzJTIwYnVpbGRpbmdzfGVufDF8fHx8MTc1Nzc2OTYxNnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                alt="University Campus Buildings"
-                className="w-full h-96 object-cover"
+              src={CampusImg}
+              alt="University Campus Buildings"
+              className="w-full h-96 object-cover"
               />
             </Card>
           </div>

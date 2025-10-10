@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { GraduationCap, MapPin, Users, Award, Settings, LogIn, LogOut, Shield, Menu } from "lucide-react";
+import Logo from "../assets/sorsulogo.png"; // Add this import
+
 
 interface UniversityHeaderProps {
   onLoginToggle: () => void;
@@ -24,10 +26,10 @@ export default function UniversityHeader({
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-primary text-primary-foreground rounded-lg">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div>
+            <div className="flex items-center justify-center w-10 h-10 bg-primary text-primary-foreground rounded-full">
+               <img src={Logo} alt="SorSU Logo" className="w-10 h-10 object-contain" />
+             </div>
+             <div>
               <h1 className="text-xl font-bold">SorSU-Bulan</h1>
               <p className="text-sm text-muted-foreground">Sorsogon State University - Bulan Campus</p>
             </div>
