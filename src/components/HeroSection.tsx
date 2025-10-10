@@ -24,12 +24,6 @@ export default function HeroSection() {
               prepare students for success in their chosen fields.
             </p>
             
-            <div className="mb-8">
-              <Button variant="outline" size="lg" className="text-lg px-8">
-                Schedule a Tour
-              </Button>
-            </div>
-            
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-lg mx-auto mb-2">
