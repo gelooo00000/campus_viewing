@@ -41,7 +41,6 @@ export default function UniversityHeader({
               <>
                 <a href="#programs" className="hover:text-primary transition-colors text-sm">Programs</a>
                 <a href="#campus" className="hover:text-primary transition-colors text-sm">Campus</a>
-                <a href="#student-life" className="hover:text-primary transition-colors text-sm">Student Life</a>
                 <a href="#departments" className="hover:text-primary transition-colors text-sm">Departments</a>
                 <a href="#faculty" className="hover:text-primary transition-colors text-sm">Faculty</a>
                 <a href="#announcements" className="hover:text-primary transition-colors text-sm">Announcements</a>
@@ -91,7 +90,6 @@ export default function UniversityHeader({
               <>
                 <a href="#programs" className="hover:text-primary">Programs</a>
                 <a href="#campus" className="hover:text-primary">Campus</a>
-                <a href="#student-life" className="hover:text-primary">Student Life</a>
                 <a href="#departments" className="hover:text-primary">Departments</a>
                 <a href="#faculty" className="hover:text-primary">Faculty</a>
                 <a href="#announcements" className="hover:text-primary">Announcements</a>

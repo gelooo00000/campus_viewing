@@ -7,6 +7,7 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import * as React from "react";
 import { 
   Plus, 
@@ -20,62 +21,7 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  priority: string;
-  audience: string;
-  status: string;
-  publishDate: string;
-  expiryDate: string;
-  author: string;
-  views: number;
-}
-
-const mockAnnouncements: Announcement[] = [
-  {
-    id: "1",
-    title: "Fall 2024 Registration Now Open",
-    content: "Registration for Fall 2024 semester is now open. Please log into your student portal to register for classes. Early registration ends September 15th.",
-    category: "Academic",
-    priority: "High",
-    audience: "Students",
-    status: "Published",
-    publishDate: "2024-08-15",
-    expiryDate: "2024-09-30",
-    author: "Registrar Office",
-    views: 1247
-  },
-  {
-    id: "2",
-    title: "Library Hours Extended During Finals",
-    content: "The Central Library will be open 24/7 during finals week (December 16-22) to support students during their exam preparation.",
-    category: "Services",
-    priority: "Medium",
-    audience: "Students",
-    status: "Draft",
-    publishDate: "2024-12-10",
-    expiryDate: "2024-12-25",
-    author: "Library Services",
-    views: 0
-  },
-  {
-    id: "3",
-    title: "New Parking Regulations Effective January 1",
-    content: "Updated parking regulations will take effect January 1, 2025. All faculty and staff must register their vehicles by December 20th.",
-    category: "Campus",
-    priority: "Medium",
-    audience: "Faculty & Staff",
-    status: "Scheduled",
-    publishDate: "2024-12-20",
-    expiryDate: "2025-01-31",
-    author: "Campus Security",
-    views: 0
-  }
-];
+import { useAnnouncements, type Announcement } from "../context/AnnouncementContext";
 
 const categories = ["Academic", "Services", "Campus", "Events", "Emergency"];
 const priorities = ["Low", "Medium", "High", "Critical"];
@@ -83,9 +29,10 @@ const audiences = ["Students", "Faculty & Staff", "Public", "All"];
 const statuses = ["Draft", "Scheduled", "Published", "Expired"];
 
 export default function AnnouncementManager() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
+  const { announcements, addAnnouncement, updateAnnouncement, deleteAnnouncement } = useAnnouncements();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -93,7 +40,9 @@ export default function AnnouncementManager() {
     priority: "Medium",
     audience: "",
     publishDate: "",
-    expiryDate: ""
+    expiryDate: "",
+    tags: "",
+    isPinned: false
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,23 +50,31 @@ export default function AnnouncementManager() {
     
     if (editingAnnouncement) {
       // Update existing announcement
-      const updatedAnnouncements = announcements.map(ann => 
-        ann.id === editingAnnouncement.id 
-          ? { ...ann, ...formData, status: "Published" }
-          : ann
-      );
-      setAnnouncements(updatedAnnouncements);
+      const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+      updateAnnouncement(editingAnnouncement.id, {
+        ...formData,
+        status: editingAnnouncement.status || "Published",
+        type: formData.category,
+        targetAudience: formData.audience,
+        isPinned: formData.isPinned !== undefined ? formData.isPinned : (editingAnnouncement.isPinned || false),
+        tags: tagsArray.length > 0 ? tagsArray : (editingAnnouncement.tags || [])
+      });
       toast.success("Announcement updated successfully!");
     } else {
       // Create new announcement
+      const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : [];
       const newAnnouncement: Announcement = {
         id: Date.now().toString(),
         ...formData,
         status: "Published",
         author: "Admin User",
-        views: 0
+        views: 0,
+        type: formData.category,
+        targetAudience: formData.audience,
+        isPinned: formData.isPinned || false,
+        tags: tagsArray
       };
-      setAnnouncements([newAnnouncement, ...announcements]);
+      addAnnouncement(newAnnouncement);
       toast.success("Announcement created successfully!");
     }
     
@@ -132,7 +89,9 @@ export default function AnnouncementManager() {
       priority: "Medium",
       audience: "",
       publishDate: "",
-      expiryDate: ""
+      expiryDate: "",
+      tags: "",
+      isPinned: false
     });
     setEditingAnnouncement(null);
     setIsCreateDialogOpen(false);
@@ -147,13 +106,16 @@ export default function AnnouncementManager() {
       priority: announcement.priority,
       audience: announcement.audience,
       publishDate: announcement.publishDate,
-      expiryDate: announcement.expiryDate
+      expiryDate: announcement.expiryDate || "",
+      tags: announcement.tags ? announcement.tags.join(', ') : "",
+      isPinned: announcement.isPinned || false
     });
     setIsCreateDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setAnnouncements(announcements.filter(ann => ann.id !== id));
+    deleteAnnouncement(id);
+    setDeleteConfirmId(null);
     toast.success("Announcement deleted successfully!");
   };
 
@@ -276,13 +238,37 @@ export default function AnnouncementManager() {
                 </div>
               </div>
               
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="expiryDate">Expiry Date (Optional)</Label>
+                  <Input
+                    id="expiryDate"
+                    type="date"
+                    value={formData.expiryDate}
+                    onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="isPinned"
+                      checked={formData.isPinned}
+                      onChange={(e) => setFormData({...formData, isPinned: e.target.checked})}
+                      className="rounded"
+                    />
+                    <Label htmlFor="isPinned">Pin to top</Label>
+                  </div>
+                </div>
+              </div>
+              
               <div>
-                <Label htmlFor="expiryDate">Expiry Date (Optional)</Label>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
                 <Input
-                  id="expiryDate"
-                  type="date"
-                  value={formData.expiryDate}
-                  onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                  placeholder="Academic, Deadline, Important"
                 />
               </div>
               
@@ -325,9 +311,27 @@ export default function AnnouncementManager() {
                   <Button size="sm" variant="outline" onClick={() => handleEdit(announcement)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleDelete(announcement.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <AlertDialog open={deleteConfirmId === announcement.id} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(announcement.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{announcement.title}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(announcement.id)} className="bg-red-600 hover:bg-red-700">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardHeader>

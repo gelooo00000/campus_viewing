@@ -2,6 +2,9 @@ import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import LibraryImg from "../assets/library.jpg";
+import LaboratoryImg from "../assets/laboratory.jpg";
+import StudentActivityImg from "../assets/Student Activity Center.jpg";
 import { MapPin, Clock, Users, Wifi, Map } from "lucide-react";
 import { useState } from "react";
 import VirtualCampusMap from "./VirtualCampusMap";
@@ -9,21 +12,21 @@ import VirtualCampusMap from "./VirtualCampusMap";
 const facilities = [
   {
     name: "SorSU-Bulan Library",
-    image: "https://images.unsplash.com/photo-1595315342809-fa10945ed07c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsaWJyYXJ5JTIwc3R1ZHklMjBzdHVkZW50c3xlbnwxfHx8fDE3NTc2NzU4OTR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    image: LibraryImg,
     description: "Modern library facility with extensive collection of books, journals, and digital resources",
     features: ["Study Areas", "Computer Labs", "Internet Access", "Research Support"],
     hours: "Mon-Fri 7AM-8PM"
   },
   {
     name: "IT & Computer Laboratories",
-    image: "https://images.unsplash.com/photo-1582273953509-3972288b909e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2llbmNlJTIwbGFib3JhdG9yeSUyMGVxdWlwbWVudHxlbnwxfHx8fDE3NTc3MjQxMjZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    image: LaboratoryImg,
     description: "Well-equipped computer laboratories supporting IT and programming courses",
     features: ["Modern Computers", "Software Development Tools", "Network Labs", "Multimedia Systems"],
     hours: "Mon-Fri 7AM-7PM"
   },
   {
     name: "Student Activity Center",
-    image: "https://images.unsplash.com/photo-1738949538812-aebbb54a0592?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwZ3JhZHVhdGlvbiUyMGNlcmVtb255fGVufDF8fHx8MTc1Nzc0MDAzOHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    image: StudentActivityImg,
     description: "Central hub for student activities, events, and campus life",
     features: ["Cafeteria", "Meeting Rooms", "Audio-Visual Equipment", "Student Organizations"],
     hours: "Mon-Fri 6AM-9PM"

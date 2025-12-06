@@ -8,6 +8,7 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { 
   Plus, 
   Edit, 
@@ -20,88 +21,33 @@ import {
   XCircle
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  category: string;
-  maxAttendees: number;
-  currentAttendees: number;
-  status: string;
-  organizer: string;
-  registrationRequired: boolean;
-  isPublic: boolean;
-}
-
-const mockEvents: Event[] = [
-  {
-    id: "1",
-    title: "Graduate Research Symposium",
-    description: "Annual showcase of graduate student research across all departments. Presentations, posters, and networking opportunities.",
-    date: "2024-11-15",
-    time: "09:00",
-    location: "Student Center Auditorium",
-    category: "Academic",
-    maxAttendees: 200,
-    currentAttendees: 156,
-    status: "Published",
-    organizer: "Graduate School",
-    registrationRequired: true,
-    isPublic: true
-  },
-  {
-    id: "2",
-    title: "Career Fair - Technology Sector",
-    description: "Meet with leading technology companies for internship and full-time opportunities. Bring your resume and dress professionally.",
-    date: "2024-10-25",
-    time: "10:00",
-    location: "Recreation Center Gymnasium",
-    category: "Career",
-    maxAttendees: 500,
-    currentAttendees: 423,
-    status: "Published",
-    organizer: "Career Services",
-    registrationRequired: false,
-    isPublic: true
-  },
-  {
-    id: "3",
-    title: "Faculty Development Workshop",
-    description: "Workshop on integrating AI tools in curriculum design and delivery. For faculty and staff only.",
-    date: "2024-11-08",
-    time: "14:00",
-    location: "Faculty Lounge, Main Building",
-    category: "Professional Development",
-    maxAttendees: 50,
-    currentAttendees: 32,
-    status: "Draft",
-    organizer: "Faculty Development Center",
-    registrationRequired: true,
-    isPublic: false
-  }
-];
+import { useEvents, type Event } from "../context/EventContext";
 
 const categories = ["Academic", "Career", "Social", "Cultural", "Sports", "Professional Development", "Student Life"];
 const statuses = ["Draft", "Published", "Cancelled", "Completed"];
 
 export default function EventsManager() {
-  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const { events, addEvent, updateEvent, deleteEvent, updateEventStatus } = useEvents();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     date: "",
     time: "",
+    endDate: "",
+    endTime: "",
     location: "",
     category: "",
     maxAttendees: "",
     organizer: "",
     registrationRequired: false,
+    registrationDeadline: "",
+    contactEmail: "",
+    website: "",
+    tags: "",
+    featured: false,
     isPublic: true
   });
 
@@ -110,28 +56,50 @@ export default function EventsManager() {
     
     if (editingEvent) {
       // Update existing event
-      const updatedEvents = events.map(event => 
-        event.id === editingEvent.id 
-          ? { 
-              ...event, 
-              ...formData, 
-              maxAttendees: parseInt(formData.maxAttendees),
-              status: "Published" 
-            }
-          : event
-      );
-      setEvents(updatedEvents);
+      const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+      updateEvent(editingEvent.id, {
+        ...formData,
+        maxAttendees: parseInt(formData.maxAttendees),
+        status: editingEvent.status || "Published",
+        date: formData.date,
+        time: formData.time,
+        startDate: formData.date,
+        startTime: formData.time,
+        endDate: formData.endDate || undefined,
+        endTime: formData.endTime || undefined,
+        type: formData.category,
+        featured: formData.featured !== undefined ? formData.featured : (editingEvent.featured || false),
+        tags: tagsArray.length > 0 ? tagsArray : (editingEvent.tags || []),
+        registrationDeadline: formData.registrationDeadline || undefined,
+        contactEmail: formData.contactEmail || undefined,
+        website: formData.website || undefined,
+        capacity: parseInt(formData.maxAttendees)
+      });
       toast.success("Event updated successfully!");
     } else {
       // Create new event
+      const tagsArray = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(t => t) : [];
       const newEvent: Event = {
         id: Date.now().toString(),
         ...formData,
         maxAttendees: parseInt(formData.maxAttendees),
         currentAttendees: 0,
-        status: "Published"
+        status: "Published",
+        date: formData.date,
+        time: formData.time,
+        startDate: formData.date,
+        startTime: formData.time,
+        endDate: formData.endDate || undefined,
+        endTime: formData.endTime || undefined,
+        type: formData.category,
+        featured: formData.featured || false,
+        tags: tagsArray,
+        registrationDeadline: formData.registrationDeadline || undefined,
+        contactEmail: formData.contactEmail || undefined,
+        website: formData.website || undefined,
+        capacity: parseInt(formData.maxAttendees)
       };
-      setEvents([newEvent, ...events]);
+      addEvent(newEvent);
       toast.success("Event created successfully!");
     }
     
@@ -144,11 +112,18 @@ export default function EventsManager() {
       description: "",
       date: "",
       time: "",
+      endDate: "",
+      endTime: "",
       location: "",
       category: "",
       maxAttendees: "",
       organizer: "",
       registrationRequired: false,
+      registrationDeadline: "",
+      contactEmail: "",
+      website: "",
+      tags: "",
+      featured: false,
       isPublic: true
     });
     setEditingEvent(null);
@@ -160,28 +135,33 @@ export default function EventsManager() {
     setFormData({
       title: event.title,
       description: event.description,
-      date: event.date,
-      time: event.time,
+      date: event.date || event.startDate || "",
+      time: event.time || event.startTime || "",
+      endDate: event.endDate || "",
+      endTime: event.endTime || "",
       location: event.location,
       category: event.category,
       maxAttendees: event.maxAttendees.toString(),
       organizer: event.organizer,
       registrationRequired: event.registrationRequired,
+      registrationDeadline: event.registrationDeadline || "",
+      contactEmail: event.contactEmail || "",
+      website: event.website || "",
+      tags: event.tags ? event.tags.join(', ') : "",
+      featured: event.featured || false,
       isPublic: event.isPublic
     });
     setIsCreateDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    setEvents(events.filter(event => event.id !== id));
+    deleteEvent(id);
+    setDeleteConfirmId(null);
     toast.success("Event deleted successfully!");
   };
 
   const handleStatusChange = (id: string, newStatus: string) => {
-    const updatedEvents = events.map(event => 
-      event.id === id ? { ...event, status: newStatus } : event
-    );
-    setEvents(updatedEvents);
+    updateEventStatus(id, newStatus);
     toast.success(`Event status updated to ${newStatus}!`);
   };
 
@@ -248,7 +228,7 @@ export default function EventsManager() {
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="date">Start Date</Label>
                   <Input
                     id="date"
                     type="date"
@@ -258,7 +238,7 @@ export default function EventsManager() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="time">Time</Label>
+                  <Label htmlFor="time">Start Time</Label>
                   <Input
                     id="time"
                     type="time"
@@ -275,6 +255,27 @@ export default function EventsManager() {
                     value={formData.maxAttendees}
                     onChange={(e) => setFormData({...formData, maxAttendees: e.target.value})}
                     required
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="endDate">End Date (Optional)</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endTime">End Time (Optional)</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({...formData, endTime: e.target.value})}
                   />
                 </div>
               </div>
@@ -304,13 +305,58 @@ export default function EventsManager() {
                 </div>
               </div>
               
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="organizer">Organizer</Label>
+                  <Input
+                    id="organizer"
+                    value={formData.organizer}
+                    onChange={(e) => setFormData({...formData, organizer: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactEmail">Contact Email</Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={formData.contactEmail}
+                    onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="website">Website (Optional)</Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => setFormData({...formData, website: e.target.value})}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                {formData.registrationRequired && (
+                  <div>
+                    <Label htmlFor="registrationDeadline">Registration Deadline</Label>
+                    <Input
+                      id="registrationDeadline"
+                      type="date"
+                      value={formData.registrationDeadline}
+                      onChange={(e) => setFormData({...formData, registrationDeadline: e.target.value})}
+                    />
+                  </div>
+                )}
+              </div>
+              
               <div>
-                <Label htmlFor="organizer">Organizer</Label>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
                 <Input
-                  id="organizer"
-                  value={formData.organizer}
-                  onChange={(e) => setFormData({...formData, organizer: e.target.value})}
-                  required
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                  placeholder="Academic, Research, Workshop"
                 />
               </div>
               
@@ -334,6 +380,16 @@ export default function EventsManager() {
                     className="rounded"
                   />
                   <Label htmlFor="isPublic">Public Event</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    checked={formData.featured}
+                    onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                    className="rounded"
+                  />
+                  <Label htmlFor="featured">Featured Event</Label>
                 </div>
               </div>
               
@@ -399,9 +455,27 @@ export default function EventsManager() {
                   <Button size="sm" variant="outline" onClick={() => handleEdit(event)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleDelete(event.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <AlertDialog open={deleteConfirmId === event.id} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(event.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{event.title}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(event.id)} className="bg-red-600 hover:bg-red-700">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardHeader>

@@ -3,12 +3,10 @@ import UniversityHeader from "./components/UniversityHeader";
 import HeroSection from "./components/HeroSection";
 import ProgramsSection from "./components/ProgramsSection";
 import CampusSection from "./components/CampusSection";
-import StudentClubsSection from "./components/StudentClubsSection";
 import DepartmentsSection from "./components/DepartmentsSection";
 import FacultySection from "./components/FacultySection";
 import AnnouncementsSection from "./components/AnnouncementsSection";
 import EventsSection from "./components/EventsSection";
-import FAQSection from "./components/FAQSection";
 import Footer from "./components/Footer";
 import AdminDashboard from "./components/AdminDashboard";
 import FacultyDashboard from "./components/FacultyDashboard";
@@ -77,12 +75,10 @@ export default function App() {
             <HeroSection />
             <ProgramsSection />
             <CampusSection />
-            <StudentClubsSection />
             <DepartmentsSection />
             <FacultySection />
             <AnnouncementsSection />
             <EventsSection />
-            <FAQSection />
           </>
         )}
       </main>

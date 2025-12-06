@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -19,8 +19,10 @@ import {
   Trophy,
   Heart
 } from "lucide-react";
+import { useEvents, eventToStudentView } from "../context/EventContext";
 
-interface Event {
+// Student view interface
+interface EventView {
   id: string;
   title: string;
   description: string;
@@ -41,123 +43,22 @@ interface Event {
   featured: boolean;
 }
 
-// Mock events data that would normally come from the admin-created events
-const mockEvents: Event[] = [
-  {
-    id: "1",
-    title: "SorSU-Bulan Research Symposium 2024",
-    description: "Join us for the annual Research Symposium showcasing innovative research projects by our faculty and students. This year's theme focuses on 'Innovation for Sustainable Development' with presentations covering various fields including engineering, technology, agriculture, and social sciences.",
-    type: "Academic",
-    category: "Conference",
-    startDate: "2024-02-15",
-    endDate: "2024-02-16",
-    startTime: "08:00",
-    endTime: "17:00",
-    location: "SorSU-Bulan Auditorium",
-    organizer: "College of Engineering and Technology",
-    capacity: 200,
-    registrationRequired: true,
-    registrationDeadline: "2024-02-10",
-    contactEmail: "research@sorsu-bulan.edu.ph",
-    website: "https://sorsu-bulan.edu.ph/symposium2024",
-    tags: ["Research", "Innovation", "Academic", "Technology"],
-    featured: true
-  },
-  {
-    id: "2",
-    title: "Engineering Week 2024",
-    description: "A week-long celebration of engineering excellence featuring technical competitions, workshops, seminars, and networking opportunities. Open to all engineering students and professionals.",
-    type: "Academic",
-    category: "Festival",
-    startDate: "2024-02-20",
-    endDate: "2024-02-24",
-    startTime: "08:00",
-    endTime: "18:00",
-    location: "Engineering Building",
-    organizer: "Engineering Students Society",
-    registrationRequired: false,
-    contactEmail: "engineering@sorsu-bulan.edu.ph",
-    tags: ["Engineering", "Competition", "Workshop", "Students"],
-    featured: true
-  },
-  {
-    id: "3",
-    title: "Career Fair 2024",
-    description: "Meet with potential employers and explore career opportunities. Leading companies from various industries will be present to discuss job openings, internships, and career paths.",
-    type: "Career",
-    category: "Fair",
-    startDate: "2024-03-05",
-    startTime: "09:00",
-    endTime: "16:00",
-    location: "University Gymnasium",
-    organizer: "Career Services Office",
-    capacity: 500,
-    registrationRequired: true,
-    registrationDeadline: "2024-03-01",
-    contactEmail: "careers@sorsu-bulan.edu.ph",
-    tags: ["Career", "Jobs", "Networking", "Recruitment"],
-    featured: true
-  },
-  {
-    id: "4",
-    title: "Cultural Night: Celebrating Filipino Heritage",
-    description: "An evening of Filipino culture featuring traditional dances, music performances, local cuisine, and art exhibitions. Showcase the rich cultural heritage of the Philippines.",
-    type: "Cultural",
-    category: "Performance",
-    startDate: "2024-02-28",
-    startTime: "18:00",
-    endTime: "21:00",
-    location: "University Plaza",
-    organizer: "Cultural Affairs Office",
-    registrationRequired: false,
-    contactEmail: "culture@sorsu-bulan.edu.ph",
-    tags: ["Culture", "Performance", "Filipino", "Arts"],
-    featured: false
-  },
-  {
-    id: "5",
-    title: "Blood Donation Drive",
-    description: "Help save lives by donating blood. The Philippine Red Cross will be conducting a blood donation drive on campus. All healthy individuals aged 18-60 are encouraged to participate.",
-    type: "Community",
-    category: "Service",
-    startDate: "2024-02-22",
-    startTime: "08:00",
-    endTime: "15:00",
-    location: "Student Center",
-    organizer: "Student Government",
-    registrationRequired: false,
-    contactEmail: "studentgov@sorsu-bulan.edu.ph",
-    tags: ["Community Service", "Health", "Donation", "Red Cross"],
-    featured: false
-  },
-  {
-    id: "6",
-    title: "IT Workshop: Web Development Fundamentals",
-    description: "Learn the basics of web development including HTML, CSS, and JavaScript. This hands-on workshop is perfect for beginners who want to start their journey in web development.",
-    type: "Academic",
-    category: "Workshop",
-    startDate: "2024-03-12",
-    startTime: "13:00",
-    endTime: "17:00",
-    location: "Computer Laboratory 1",
-    organizer: "IT Department",
-    capacity: 30,
-    registrationRequired: true,
-    registrationDeadline: "2024-03-08",
-    contactEmail: "it@sorsu-bulan.edu.ph",
-    tags: ["IT", "Web Development", "Programming", "Technology"],
-    featured: false
-  }
-];
-
 const eventTypes = ["All", "Academic", "Cultural", "Career", "Community", "Sports"];
 const categories = ["All", "Conference", "Workshop", "Festival", "Fair", "Performance", "Service"];
 
 export default function EventsSection() {
+  const { events } = useEvents();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [filterCategory, setFilterCategory] = useState("All");
   const [expandedEvents, setExpandedEvents] = useState<string[]>([]);
+
+  // Convert to student view format and filter only Published and Public events
+  const studentViewEvents = useMemo(() => {
+    return events
+      .filter(e => e.status === "Published" && e.isPublic)
+      .map(e => eventToStudentView(e));
+  }, [events]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -226,16 +127,17 @@ export default function EventsSection() {
     );
   };
 
-  const filteredEvents = mockEvents
-    .filter(event => {
-      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           event.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesType = filterType === "All" || event.type === filterType;
-      const matchesCategory = filterCategory === "All" || event.category === filterCategory;
-      
-      return matchesSearch && matchesType && matchesCategory;
-    })
+  const filteredEvents = useMemo(() => {
+    return studentViewEvents
+      .filter(event => {
+        const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             event.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesType = filterType === "All" || event.type === filterType;
+        const matchesCategory = filterCategory === "All" || event.category === filterCategory;
+        
+        return matchesSearch && matchesType && matchesCategory;
+      })
     .sort((a, b) => {
       // Sort by: featured first, then upcoming events, then by date
       if (a.featured && !b.featured) return -1;
@@ -249,6 +151,7 @@ export default function EventsSection() {
       
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
+  }, [studentViewEvents, searchTerm, filterType, filterCategory]);
 
   const featuredEvents = filteredEvents.filter(e => e.featured);
   const upcomingEvents = filteredEvents.filter(e => !e.featured && isUpcoming(e.startDate));

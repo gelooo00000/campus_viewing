@@ -33,7 +33,7 @@ const FAQ_DATA = [
     question: "What programs are available?",
     category: "Academics",
     icon: <BookOpen className="w-4 h-4" />,
-    answer: "SorSU-Bulan offers various programs:\n\n🎓 UNDERGRADUATE PROGRAMS:\n• Bachelor of Science in Computer Science\n• Bachelor of Science in Information Technology\n• Bachelor of Science in Business Administration\n• Bachelor of Elementary Education\n• Bachelor of Secondary Education\n• Bachelor of Science in Civil Engineering\n• Bachelor of Science in Electrical Engineering\n\n📚 GRADUATE PROGRAMS:\n• Master in Management\n• Master of Arts in Education\n• Master of Arts in Teaching"
+    answer: "SorSU-Bulan offers the following undergraduate programs:\n\n• Bachelor of Science in Computer Science (BSCS)\n• Bachelor of Science in Information Technology (BSIT)\n• Bachelor of Science in Information Systems (BSIS)\n• Bachelor of Science in Accountancy (BSA)\n• Bachelor of Science in Accounting Information System (BSAIS)\n• Bachelor in Public Administration (BPA)\n• Bachelor of Science in Entrepreneurship (BSENTREP)\n• Bachelor of Technical Vocational Teacher Education (BTVTED) major in Computer System Servicing\n\nFor graduate offerings and other programs, please contact the Registrar's Office or check the academic catalog."
   },
   {
     id: 5,

@@ -8,6 +8,7 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { 
   Plus, 
@@ -22,77 +23,7 @@ import {
   Search
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface Faculty {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  office: string;
-  department: string;
-  title: string;
-  status: string;
-  bio: string;
-  specializations: string[];
-  education: string[];
-  awards: string[];
-  profileImage?: string;
-  officeHours: string;
-  website?: string;
-}
-
-const mockFaculty: Faculty[] = [
-  {
-    id: "1",
-    firstName: "Dr. Sarah",
-    lastName: "Johnson",
-    email: "s.johnson@university.edu",
-    phone: "(555) 123-4567",
-    office: "Science Building 301",
-    department: "Computer Science",
-    title: "Professor",
-    status: "Active",
-    bio: "Dr. Johnson specializes in artificial intelligence and machine learning research with over 15 years of experience in the field.",
-    specializations: ["Artificial Intelligence", "Machine Learning", "Data Science"],
-    education: ["Ph.D. Computer Science - MIT", "M.S. Computer Science - Stanford"],
-    awards: ["Excellence in Teaching Award 2023", "Research Innovation Grant 2022"],
-    officeHours: "Mon/Wed 2-4 PM",
-    website: "https://cs.university.edu/faculty/johnson"
-  },
-  {
-    id: "2",
-    firstName: "Prof. Michael",
-    lastName: "Chen",
-    email: "m.chen@university.edu",
-    phone: "(555) 234-5678",
-    office: "Business Building 205",
-    department: "Business Administration",
-    title: "Associate Professor",
-    status: "Active",
-    bio: "Professor Chen focuses on international business strategy and has consulted for Fortune 500 companies worldwide.",
-    specializations: ["International Business", "Strategic Management", "Corporate Finance"],
-    education: ["Ph.D. Business Administration - Harvard", "MBA - Wharton"],
-    awards: ["Outstanding Faculty Award 2021"],
-    officeHours: "Tue/Thu 1-3 PM"
-  },
-  {
-    id: "3",
-    firstName: "Dr. Emily",
-    lastName: "Rodriguez",
-    email: "e.rodriguez@university.edu",
-    phone: "(555) 345-6789",
-    office: "Arts Building 102",
-    department: "Psychology",
-    title: "Assistant Professor",
-    status: "On Leave",
-    bio: "Dr. Rodriguez researches cognitive psychology and human behavior, with a focus on memory and learning processes.",
-    specializations: ["Cognitive Psychology", "Memory Research", "Learning Sciences"],
-    education: ["Ph.D. Psychology - UCLA", "M.A. Psychology - UC Berkeley"],
-    awards: [],
-    officeHours: "Currently on sabbatical"
-  }
-];
+import { useFaculty, type Faculty } from "../context/FacultyContext";
 
 const departments = [
   "Computer Science", "Business Administration", "Psychology", "Engineering", 
@@ -107,11 +38,12 @@ const titles = [
 const statuses = ["Active", "On Leave", "Sabbatical", "Retired", "Inactive"];
 
 export default function FacultyManager() {
-  const [faculty, setFaculty] = useState<Faculty[]>(mockFaculty);
+  const { faculty, addFaculty, updateFaculty, deleteFaculty } = useFaculty();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -141,12 +73,7 @@ export default function FacultyManager() {
 
     if (editingFaculty) {
       // Update existing faculty
-      const updatedFaculty = faculty.map(f => 
-        f.id === editingFaculty.id 
-          ? { ...f, ...facultyData }
-          : f
-      );
-      setFaculty(updatedFaculty);
+      updateFaculty(editingFaculty.id, facultyData);
       toast.success("Faculty profile updated successfully!");
     } else {
       // Create new faculty
@@ -154,7 +81,7 @@ export default function FacultyManager() {
         id: Date.now().toString(),
         ...facultyData
       };
-      setFaculty([newFaculty, ...faculty]);
+      addFaculty(newFaculty);
       toast.success("Faculty profile created successfully!");
     }
     
@@ -204,7 +131,8 @@ export default function FacultyManager() {
   };
 
   const handleDelete = (id: string) => {
-    setFaculty(faculty.filter(f => f.id !== id));
+    deleteFaculty(id);
+    setDeleteConfirmId(null);
     toast.success("Faculty profile deleted successfully!");
   };
 
@@ -478,9 +406,27 @@ export default function FacultyManager() {
                         <Button size="sm" variant="outline" onClick={() => handleEdit(facultyMember)}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleDelete(facultyMember.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <AlertDialog open={deleteConfirmId === facultyMember.id} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(facultyMember.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Faculty Member</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete {facultyMember.firstName} {facultyMember.lastName}? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(facultyMember.id)} className="bg-red-600 hover:bg-red-700">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-3">

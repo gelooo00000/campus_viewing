@@ -7,6 +7,7 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Calendar } from "./ui/calendar";
 import * as React from "react";
 import { 
@@ -21,79 +22,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface CalendarItem {
-  id: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  category: string;
-  type: string;
-  isRecurring: boolean;
-  recurringPattern?: string;
-  affectedGroups: string[];
-  priority: string;
-  color: string;
-}
-
-const mockCalendarItems: CalendarItem[] = [
-  {
-    id: "1",
-    title: "Fall Semester Classes Begin",
-    description: "First day of classes for Fall 2024 semester",
-    startDate: "2024-08-26",
-    endDate: "2024-08-26",
-    category: "Academic",
-    type: "Milestone",
-    isRecurring: false,
-    affectedGroups: ["Students", "Faculty"],
-    priority: "High",
-    color: "blue"
-  },
-  {
-    id: "2",
-    title: "Thanksgiving Break",
-    description: "University closed for Thanksgiving holiday",
-    startDate: "2024-11-28",
-    endDate: "2024-11-29",
-    category: "Holiday",
-    type: "Break",
-    isRecurring: true,
-    recurringPattern: "Yearly",
-    affectedGroups: ["All"],
-    priority: "High",
-    color: "orange"
-  },
-  {
-    id: "3",
-    title: "Final Exams Week",
-    description: "Final examinations for Fall 2024 semester",
-    startDate: "2024-12-16",
-    endDate: "2024-12-22",
-    category: "Academic",
-    type: "Exam Period",
-    isRecurring: true,
-    recurringPattern: "Semester",
-    affectedGroups: ["Students", "Faculty"],
-    priority: "Critical",
-    color: "red"
-  },
-  {
-    id: "4",
-    title: "Spring Registration Opens",
-    description: "Registration period begins for Spring 2025 semester",
-    startDate: "2024-11-01",
-    endDate: "2024-11-15",
-    category: "Registration",
-    type: "Period",
-    isRecurring: true,
-    recurringPattern: "Semester",
-    affectedGroups: ["Students"],
-    priority: "High",
-    color: "green"
-  }
-];
+import { useCalendar, type CalendarItem } from "../context/CalendarContext";
 
 const categories = ["Academic", "Holiday", "Registration", "Events", "Administrative", "Campus"];
 const types = ["Milestone", "Period", "Break", "Exam Period", "Deadline", "Event"];
@@ -103,10 +32,11 @@ const colors = ["blue", "green", "red", "orange", "purple", "teal"];
 const recurringPatterns = ["Daily", "Weekly", "Monthly", "Semester", "Yearly"];
 
 export default function CalendarManager() {
-  const [calendarItems, setCalendarItems] = useState<CalendarItem[]>(mockCalendarItems);
+  const { calendarItems, addCalendarItem, updateCalendarItem, deleteCalendarItem } = useCalendar();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CalendarItem | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -126,12 +56,7 @@ export default function CalendarManager() {
     
     if (editingItem) {
       // Update existing item
-      const updatedItems = calendarItems.map(item => 
-        item.id === editingItem.id 
-          ? { ...item, ...formData }
-          : item
-      );
-      setCalendarItems(updatedItems);
+      updateCalendarItem(editingItem.id, formData);
       toast.success("Calendar item updated successfully!");
     } else {
       // Create new item
@@ -139,7 +64,7 @@ export default function CalendarManager() {
         id: Date.now().toString(),
         ...formData
       };
-      setCalendarItems([newItem, ...calendarItems]);
+      addCalendarItem(newItem);
       toast.success("Calendar item created successfully!");
     }
     
@@ -183,7 +108,8 @@ export default function CalendarManager() {
   };
 
   const handleDelete = (id: string) => {
-    setCalendarItems(calendarItems.filter(item => item.id !== id));
+    deleteCalendarItem(id);
+    setDeleteConfirmId(null);
     toast.success("Calendar item deleted successfully!");
   };
 
@@ -462,9 +388,27 @@ export default function CalendarManager() {
                       <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete(item.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <AlertDialog open={deleteConfirmId === item.id} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(item.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Calendar Item</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{item.title}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-red-600 hover:bg-red-700">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>

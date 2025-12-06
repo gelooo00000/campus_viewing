@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -16,8 +16,10 @@ import {
   AlertCircle,
   ChevronRight
 } from "lucide-react";
+import { useAnnouncements, announcementToStudentView } from "../context/AnnouncementContext";
 
-interface Announcement {
+// Student view interface
+interface AnnouncementView {
   id: string;
   title: string;
   content: string;
@@ -31,82 +33,29 @@ interface Announcement {
   tags: string[];
 }
 
-// Mock data that would normally come from the admin-created announcements
-const mockAnnouncements: Announcement[] = [
-  {
-    id: "1",
-    title: "Registration for Second Semester 2024 Now Open",
-    content: "Online registration for the second semester of Academic Year 2023-2024 is now open. Students can access the registration portal through the student information system. Please ensure all academic and financial requirements are settled before registering.",
-    type: "Academic",
-    priority: "High",
-    targetAudience: "All Students",
-    publishDate: "2024-01-15",
-    expiryDate: "2024-02-15",
-    author: "Office of the Registrar",
-    isPinned: true,
-    tags: ["Registration", "Academic", "Deadline"]
-  },
-  {
-    id: "2", 
-    title: "SorSU-Bulan Research Symposium 2024",
-    content: "The College of Engineering and Technology invites all students and faculty to participate in the annual Research Symposium. This year's theme is 'Innovation for Sustainable Development'. Registration deadline is February 20, 2024.",
-    type: "Event",
-    priority: "Medium",
-    targetAudience: "Students",
-    publishDate: "2024-01-10",
-    expiryDate: "2024-03-01",
-    author: "College of Engineering and Technology",
-    isPinned: false,
-    tags: ["Research", "Symposium", "Innovation"]
-  },
-  {
-    id: "3",
-    title: "Library Operating Hours During Midterm Period",
-    content: "The University Library will extend its operating hours during the midterm examination period. The library will be open from 7:00 AM to 10:00 PM on weekdays and 8:00 AM to 8:00 PM on weekends.",
-    type: "General",
-    priority: "Medium", 
-    targetAudience: "All Students",
-    publishDate: "2024-01-12",
-    expiryDate: "2024-02-28",
-    author: "University Library",
-    isPinned: false,
-    tags: ["Library", "Schedule", "Midterms"]
-  },
-  {
-    id: "4",
-    title: "Scholarship Application Deadline Extended",
-    content: "The deadline for scholarship applications for the Academic Year 2024-2025 has been extended to February 29, 2024. Complete application requirements and submit to the Student Affairs Office.",
-    type: "Academic",
-    priority: "High",
-    targetAudience: "All Students",
-    publishDate: "2024-01-18",
-    expiryDate: "2024-02-29",
-    author: "Student Affairs Office",
-    isPinned: true,
-    tags: ["Scholarship", "Financial Aid", "Deadline"]
-  },
-  {
-    id: "5",
-    title: "Campus Network Maintenance Schedule",
-    content: "The IT Services will conduct scheduled network maintenance on January 25, 2024, from 11:00 PM to 3:00 AM. Internet connectivity may be intermittent during this period. We apologize for any inconvenience.",
-    type: "General",
-    priority: "Low",
-    targetAudience: "All",
-    publishDate: "2024-01-20",
-    author: "IT Services",
-    isPinned: false,
-    tags: ["Maintenance", "Network", "IT"]
-  }
-];
-
-const categories = ["All", "Academic", "Event", "General", "Administrative"];
+const categories = ["All", "Academic", "Event", "General", "Administrative", "Services", "Campus", "Emergency"];
 const priorities = ["All", "High", "Medium", "Low"];
 
 export default function AnnouncementsSection() {
+  const { announcements, incrementViews } = useAnnouncements();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterPriority, setFilterPriority] = useState("All");
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<string[]>([]);
+
+  // Convert to student view format and filter only Published announcements
+  const studentViewAnnouncements = useMemo(() => {
+    return announcements
+      .filter(a => a.status === "Published")
+      .map(a => announcementToStudentView(a))
+      .filter(a => {
+        // Filter out expired announcements
+        if (a.expiryDate) {
+          return new Date(a.expiryDate) >= new Date();
+        }
+        return true;
+      });
+  }, [announcements]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -155,16 +104,17 @@ export default function AnnouncementsSection() {
     );
   };
 
-  const filteredAnnouncements = mockAnnouncements
-    .filter(announcement => {
-      const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           announcement.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           announcement.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = filterCategory === "All" || announcement.type === filterCategory;
-      const matchesPriority = filterPriority === "All" || announcement.priority === filterPriority;
-      
-      return matchesSearch && matchesCategory && matchesPriority;
-    })
+  const filteredAnnouncements = useMemo(() => {
+    return studentViewAnnouncements
+      .filter(announcement => {
+        const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             announcement.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             announcement.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesCategory = filterCategory === "All" || announcement.type === filterCategory;
+        const matchesPriority = filterPriority === "All" || announcement.priority === filterPriority;
+        
+        return matchesSearch && matchesCategory && matchesPriority;
+      })
     .sort((a, b) => {
       // Sort by: pinned first, then by priority (High > Medium > Low), then by date
       if (a.isPinned && !b.isPinned) return -1;
@@ -178,9 +128,14 @@ export default function AnnouncementsSection() {
       
       return new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime();
     });
+  }, [studentViewAnnouncements, searchTerm, filterCategory, filterPriority]);
 
   const pinnedAnnouncements = filteredAnnouncements.filter(a => a.isPinned);
   const regularAnnouncements = filteredAnnouncements.filter(a => !a.isPinned);
+
+  const handleAnnouncementClick = (id: string) => {
+    incrementViews(id);
+  };
 
   return (
     <section id="announcements" className="py-16 bg-gradient-to-b from-blue-50 to-white">
@@ -237,7 +192,7 @@ export default function AnnouncementsSection() {
               </h3>
               <div className="space-y-4">
                 {pinnedAnnouncements.map((announcement) => (
-                  <Card key={announcement.id} className="border-primary/20 bg-primary/5">
+                  <Card key={announcement.id} className="border-primary/20 bg-primary/5" onClick={() => handleAnnouncementClick(announcement.id)}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
@@ -313,7 +268,7 @@ export default function AnnouncementsSection() {
               )}
               <div className="space-y-4">
                 {regularAnnouncements.map((announcement) => (
-                  <Card key={announcement.id} className={isExpired(announcement.expiryDate) ? "opacity-60" : ""}>
+                  <Card key={announcement.id} className={isExpired(announcement.expiryDate) ? "opacity-60" : ""} onClick={() => handleAnnouncementClick(announcement.id)}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">

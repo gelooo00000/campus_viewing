@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -17,8 +17,10 @@ import {
   User,
   Users
 } from "lucide-react";
+import { useFaculty, facultyToStudentView } from "../context/FacultyContext";
 
-interface Faculty {
+// Student view interface
+interface FacultyView {
   id: string;
   name: string;
   position: string;
@@ -36,136 +38,7 @@ interface Faculty {
   employmentStatus: string;
 }
 
-// Mock faculty data that would normally come from the admin-created faculty records
-const mockFaculty: Faculty[] = [
-  {
-    id: "1",
-    name: "Dr. Maria Elena Santos",
-    position: "Dean",
-    department: "College of Engineering and Technology",
-    specialization: ["Civil Engineering", "Structural Engineering", "Project Management"],
-    education: "Ph.D. in Civil Engineering, University of the Philippines Diliman",
-    email: "me.santos@sorsu-bulan.edu.ph",
-    phone: "+63 917 123 4567",
-    officeLocation: "Engineering Building, Room 201",
-    profileImage: "/api/placeholder/150/150",
-    bio: "Dr. Santos has over 20 years of experience in civil engineering and academia. She has led numerous infrastructure projects in Bicol Region and is passionate about sustainable engineering practices.",
-    achievements: [
-      "Outstanding Engineering Educator Award 2022",
-      "Best Research Paper in Structural Engineering 2021",
-      "CHED Outstanding Faculty Award 2020"
-    ],
-    researchInterests: ["Earthquake-resistant structures", "Sustainable building materials", "Infrastructure development"],
-    yearsOfExperience: 20,
-    employmentStatus: "Regular"
-  },
-  {
-    id: "2",
-    name: "Prof. Roberto dela Cruz",
-    position: "Program Chair",
-    department: "College of Engineering and Technology",
-    specialization: ["Computer Science", "Software Engineering", "Artificial Intelligence"],
-    education: "M.S. in Computer Science, Ateneo de Manila University",
-    email: "r.delacruz@sorsu-bulan.edu.ph",
-    phone: "+63 918 234 5678",
-    officeLocation: "Engineering Building, Room 105",
-    bio: "Prof. dela Cruz is a technology enthusiast with expertise in software development and AI. He has mentored hundreds of students in programming and system development.",
-    achievements: [
-      "Best IT Faculty Award 2023",
-      "Innovation in Teaching Award 2022",
-      "Outstanding Alumni Award - Ateneo de Manila 2021"
-    ],
-    researchInterests: ["Machine Learning", "Web Development", "Mobile Applications", "Database Systems"],
-    yearsOfExperience: 15,
-    employmentStatus: "Regular"
-  },
-  {
-    id: "3",
-    name: "Dr. Carmen Villanueva",
-    position: "Associate Professor",
-    department: "College of Arts and Sciences",
-    specialization: ["Mathematics", "Statistics", "Data Science"],
-    education: "Ph.D. in Mathematics, University of Santo Tomas",
-    email: "c.villanueva@sorsu-bulan.edu.ph",
-    officeLocation: "Academic Building, Room 302",
-    bio: "Dr. Villanueva specializes in applied mathematics and statistical analysis. She has published numerous research papers in international journals.",
-    achievements: [
-      "Best Mathematics Educator 2023",
-      "Research Excellence Award 2022",
-      "International Conference Best Paper Award 2021"
-    ],
-    researchInterests: ["Applied Statistics", "Mathematical Modeling", "Data Analytics", "Probability Theory"],
-    yearsOfExperience: 12,
-    employmentStatus: "Regular"
-  },
-  {
-    id: "4",
-    name: "Prof. Jennifer Aquino",
-    position: "Assistant Professor",
-    department: "College of Teacher Education",
-    specialization: ["Elementary Education", "Curriculum Development", "Educational Psychology"],
-    education: "M.Ed. in Elementary Education, Philippine Normal University",
-    email: "j.aquino@sorsu-bulan.edu.ph",
-    phone: "+63 919 345 6789",
-    officeLocation: "Teacher Education Building, Room 101",
-    bio: "Prof. Aquino is dedicated to improving elementary education practices and developing innovative teaching methodologies for young learners.",
-    achievements: [
-      "Outstanding Teacher Educator 2023",
-      "Curriculum Innovation Award 2022",
-      "Best Practices in Education Award 2021"
-    ],
-    researchInterests: ["Child Development", "Learning Strategies", "Educational Technology", "Inclusive Education"],
-    yearsOfExperience: 8,
-    employmentStatus: "Regular"
-  },
-  {
-    id: "5",
-    name: "Dr. Antonio Mercado",
-    position: "Professor",
-    department: "College of Business and Management",
-    specialization: ["Business Administration", "Marketing", "Entrepreneurship"],
-    education: "Ph.D. in Business Administration, De La Salle University",
-    email: "a.mercado@sorsu-bulan.edu.ph",
-    officeLocation: "Business Building, Room 201",
-    bio: "Dr. Mercado brings extensive industry experience to academia, having worked in various multinational corporations before joining SorSU-Bulan.",
-    achievements: [
-      "Business Excellence Award 2023",
-      "Outstanding Research in Marketing 2022",
-      "Industry-Academia Collaboration Award 2021"
-    ],
-    researchInterests: ["Digital Marketing", "Small Business Development", "Consumer Behavior", "E-commerce"],
-    yearsOfExperience: 18,
-    employmentStatus: "Regular"
-  },
-  {
-    id: "6",
-    name: "Ms. Sarah Gonzales",
-    position: "Instructor",
-    department: "College of Arts and Sciences",
-    specialization: ["English Literature", "Creative Writing", "Communication"],
-    education: "M.A. in English Literature, University of the Philippines Los Baños",
-    email: "s.gonzales@sorsu-bulan.edu.ph",
-    officeLocation: "Academic Building, Room 205",
-    bio: "Ms. Gonzales is passionate about literature and creative writing. She actively promotes Filipino literature and encourages students to express themselves through writing.",
-    achievements: [
-      "Creative Writing Excellence Award 2023",
-      "Literary Publication Award 2022",
-      "Student Choice Award - Best English Teacher 2021"
-    ],
-    researchInterests: ["Philippine Literature", "Creative Writing Pedagogy", "Language Acquisition", "Literary Criticism"],
-    yearsOfExperience: 6,
-    employmentStatus: "Contractual"
-  }
-];
-
-const departments = [
-  "All Departments",
-  "College of Engineering and Technology", 
-  "College of Arts and Sciences",
-  "College of Teacher Education",
-  "College of Business and Management",
-  "College of Agriculture"
-];
+// Departments will be dynamically generated from faculty data
 
 const positions = [
   "All Positions",
@@ -175,14 +48,29 @@ const positions = [
   "Professor",
   "Associate Professor",
   "Assistant Professor",
+  "Lecturer",
   "Instructor"
 ];
 
 export default function FacultySection() {
+  const { faculty } = useFaculty();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("All Departments");
   const [filterPosition, setFilterPosition] = useState("All Positions");
   const [expandedFaculty, setExpandedFaculty] = useState<string[]>([]);
+
+  // Convert faculty from context to student view format and filter only Active faculty
+  const studentViewFaculty = useMemo(() => {
+    return faculty
+      .filter(f => f.status === "Active") // Only show active faculty
+      .map(f => facultyToStudentView(f));
+  }, [faculty]);
+
+  // Get unique departments from faculty data
+  const availableDepartments = useMemo(() => {
+    const deptSet = new Set(studentViewFaculty.map(f => f.department));
+    return ["All Departments", ...Array.from(deptSet).sort()];
+  }, [studentViewFaculty]);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -217,34 +105,38 @@ export default function FacultySection() {
     );
   };
 
-  const filteredFaculty = mockFaculty
-    .filter(faculty => {
-      const matchesSearch = faculty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           faculty.specialization.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                           faculty.department.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDepartment = filterDepartment === "All Departments" || faculty.department === filterDepartment;
-      const matchesPosition = filterPosition === "All Positions" || faculty.position === filterPosition;
-      
-      return matchesSearch && matchesDepartment && matchesPosition;
-    })
-    .sort((a, b) => {
-      // Sort by position hierarchy, then by name
-      const positionOrder = ["Dean", "Associate Dean", "Program Chair", "Professor", "Associate Professor", "Assistant Professor", "Instructor"];
-      const aPos = positionOrder.indexOf(a.position);
-      const bPos = positionOrder.indexOf(b.position);
-      
-      if (aPos !== bPos) return aPos - bPos;
-      return a.name.localeCompare(b.name);
-    });
+  const filteredFaculty = useMemo(() => {
+    return studentViewFaculty
+      .filter(faculty => {
+        const matchesSearch = faculty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             faculty.specialization.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                             faculty.department.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesDepartment = filterDepartment === "All Departments" || faculty.department === filterDepartment;
+        const matchesPosition = filterPosition === "All Positions" || faculty.position === filterPosition;
+        
+        return matchesSearch && matchesDepartment && matchesPosition;
+      })
+      .sort((a, b) => {
+        // Sort by position hierarchy, then by name
+        const positionOrder = ["Dean", "Associate Dean", "Program Chair", "Professor", "Associate Professor", "Assistant Professor", "Lecturer", "Instructor"];
+        const aPos = positionOrder.indexOf(a.position);
+        const bPos = positionOrder.indexOf(b.position);
+        
+        if (aPos !== bPos) return aPos - bPos;
+        return a.name.localeCompare(b.name);
+      });
+  }, [studentViewFaculty, searchTerm, filterDepartment, filterPosition]);
 
   // Group faculty by department for better organization
-  const facultyByDepartment = filteredFaculty.reduce((acc, faculty) => {
-    if (!acc[faculty.department]) {
-      acc[faculty.department] = [];
-    }
-    acc[faculty.department].push(faculty);
-    return acc;
-  }, {} as Record<string, Faculty[]>);
+  const facultyByDepartment = useMemo(() => {
+    return filteredFaculty.reduce((acc, faculty) => {
+      if (!acc[faculty.department]) {
+        acc[faculty.department] = [];
+      }
+      acc[faculty.department].push(faculty);
+      return acc;
+    }, {} as Record<string, FacultyView[]>);
+  }, [filteredFaculty]);
 
   return (
     <section id="faculty" className="py-16 bg-gradient-to-b from-purple-50 to-white">
@@ -273,7 +165,7 @@ export default function FacultySection() {
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
-                {departments.map(dept => (
+                {availableDepartments.map(dept => (
                   <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                 ))}
               </SelectContent>

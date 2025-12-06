@@ -17,6 +17,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import React from "react";
+import ACADEMIC_PROGRAMS from "../data/programs";
 
 interface Department {
   id: string;
@@ -53,14 +54,7 @@ const mockDepartments: Department[] = [
     email: "cet@sorsu-bulan.edu.ph",
     phone: "+63 56 311 1234",
     website: "https://sorsu-bulan.edu.ph/cet",
-    programs: [
-      "Bachelor of Science in Civil Engineering",
-      "Bachelor of Science in Computer Engineering", 
-      "Bachelor of Science in Electrical Engineering",
-      "Bachelor of Science in Electronics Engineering",
-      "Bachelor of Science in Information Technology",
-      "Bachelor of Science in Computer Science"
-    ],
+    programs: ACADEMIC_PROGRAMS,
     facultyCount: 28,
     studentCount: 850,
     accreditation: ["AACCUP Level II", "PRC Accredited", "CHED Center of Excellence"],
@@ -98,14 +92,7 @@ const mockDepartments: Department[] = [
     location: "Academic Building, SorSU-Bulan Campus",
     email: "cas@sorsu-bulan.edu.ph",
     phone: "+63 56 311 1235",
-    programs: [
-      "Bachelor of Science in Mathematics",
-      "Bachelor of Science in Biology",
-      "Bachelor of Science in Chemistry", 
-      "Bachelor of Arts in English",
-      "Bachelor of Arts in Filipino",
-      "Bachelor of Science in Psychology"
-    ],
+    programs: ACADEMIC_PROGRAMS,
     facultyCount: 22,
     studentCount: 650,
     accreditation: ["AACCUP Level I", "CHED Recognized"],
@@ -143,14 +130,7 @@ const mockDepartments: Department[] = [
     location: "Teacher Education Building, SorSU-Bulan Campus",
     email: "cte@sorsu-bulan.edu.ph",
     phone: "+63 56 311 1236",
-    programs: [
-      "Bachelor of Elementary Education",
-      "Bachelor of Secondary Education - Major in Mathematics",
-      "Bachelor of Secondary Education - Major in English",
-      "Bachelor of Secondary Education - Major in Science",
-      "Bachelor of Secondary Education - Major in Filipino",
-      "Bachelor of Physical Education"
-    ],
+    programs: ACADEMIC_PROGRAMS,
     facultyCount: 18,
     studentCount: 500,
     accreditation: ["AACCUP Level II", "CHED Center of Development"],
@@ -188,14 +168,7 @@ const mockDepartments: Department[] = [
     location: "Business Building, SorSU-Bulan Campus",
     email: "cbm@sorsu-bulan.edu.ph",
     phone: "+63 56 311 1237",
-    programs: [
-      "Bachelor of Science in Business Administration",
-      "Bachelor of Science in Accountancy",
-      "Bachelor of Science in Entrepreneurship",
-      "Bachelor of Science in Marketing Management",
-      "Bachelor of Science in Financial Management",
-      "Bachelor of Science in Human Resource Management"
-    ],
+    programs: ACADEMIC_PROGRAMS,
     facultyCount: 20,
     studentCount: 750,
     accreditation: ["AACCUP Level I", "AACSB Candidate"],
@@ -233,14 +206,7 @@ const mockDepartments: Department[] = [
     location: "Agriculture Building, SorSU-Bulan Campus",
     email: "coa@sorsu-bulan.edu.ph",
     phone: "+63 56 311 1238",
-    programs: [
-      "Bachelor of Science in Agriculture",
-      "Bachelor of Science in Agricultural Engineering",
-      "Bachelor of Science in Animal Science",
-      "Bachelor of Science in Food Technology",
-      "Bachelor of Science in Agricultural Economics",
-      "Bachelor of Science in Fisheries"
-    ],
+    programs: ACADEMIC_PROGRAMS,
     facultyCount: 16,
     studentCount: 400,
     accreditation: ["AACCUP Level I", "DA Recognized"],
@@ -368,12 +334,22 @@ export default function DepartmentsSection() {
                       {department.programs.slice(0, 4).map((program, index) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                          <span className="text-muted-foreground">{program}</span>
+                          <a
+                            href={`#programs-${encodeURIComponent(program)}`}
+                            className="text-muted-foreground hover:text-primary"
+                          >
+                            {program}
+                          </a>
                         </li>
                       ))}
                       {department.programs.length > 4 && (
-                        <li className="text-primary text-sm">
-                          +{department.programs.length - 4} more programs
+                        <li>
+                          <button
+                            className="text-primary text-sm underline"
+                            onClick={() => toggleExpanded(department.id)}
+                          >
+                            +{department.programs.length - 4} more programs
+                          </button>
                         </li>
                       )}
                     </ul>
@@ -437,6 +413,24 @@ export default function DepartmentsSection() {
                 {/* Expandable Content */}
                 {expandedDepartments.includes(department.id) && (
                   <div className="mt-6 pt-6 border-t">
+                    <div className="mb-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 text-primary" />
+                        All Academic Programs
+                      </h4>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        {department.programs.map((program, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <a
+                              href={`#programs-${encodeURIComponent(program)}`}
+                              className="text-muted-foreground hover:text-primary"
+                            >
+                              {program}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                     <div className="grid md:grid-cols-2 gap-6">
                       {/* Mission & Vision */}
                       <div className="space-y-4">
