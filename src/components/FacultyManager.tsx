@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { useFaculty, type Faculty } from "../context/FacultyContext";
 
 const departments = [
-  "Computer Science", "Business Administration", "Psychology", "Engineering", 
+  "Information Technology", "Computer Science", "Business Administration", "Psychology", "Engineering",
   "Mathematics", "English", "Biology", "Chemistry", "Physics", "Art", "Music"
 ];
 
@@ -408,9 +408,7 @@ export default function FacultyManager() {
                         </Button>
                         <AlertDialog open={deleteConfirmId === facultyMember.id} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(facultyMember.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                        {/* Removed delete button - only editing allowed for Kenneth and Sean */}
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

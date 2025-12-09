@@ -14,6 +14,10 @@ import UnifiedLogin from "./components/UnifiedLogin";
 import FAQChatbot from "./components/FAQChatbot";
 import { Toaster } from "./components/ui/sonner";
 import React from "react";
+import { FacultyProvider } from "./context/FacultyContext";
+import { AnnouncementProvider } from "./context/AnnouncementContext";
+import { EventProvider } from "./context/EventContext";
+import { CalendarProvider } from "./context/CalendarContext";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,41 +54,55 @@ export default function App() {
   // Show login page when requested
   if (showLogin && !isLoggedIn) {
     return (
-      <>
-        <UnifiedLogin onLogin={handleLogin} onBack={handleBackToSite} />
-        <Toaster />
-      </>
+      <FacultyProvider>
+        <AnnouncementProvider>
+          <EventProvider>
+            <CalendarProvider>
+              <UnifiedLogin onLogin={handleLogin} onBack={handleBackToSite} />
+              <Toaster />
+            </CalendarProvider>
+          </EventProvider>
+        </AnnouncementProvider>
+      </FacultyProvider>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <UniversityHeader 
-        onLoginToggle={handleLoginToggle}
-        isLoggedIn={isLoggedIn}
-        userType={userType || undefined}
-        userName={userData?.name}
-      />
-      <main>
-        {isLoggedIn && userType === 'admin' ? (
-          <AdminDashboard />
-        ) : isLoggedIn && userType === 'faculty' ? (
-          <FacultyDashboard />
-        ) : (
-          <>
-            <HeroSection />
-            <ProgramsSection />
-            <CampusSection />
-            <DepartmentsSection />
-            <FacultySection />
-            <AnnouncementsSection />
-            <EventsSection />
-          </>
-        )}
-      </main>
-      {!isLoggedIn && <Footer />}
-      {!isLoggedIn && <FAQChatbot />}
-      <Toaster />
-    </div>
+    <FacultyProvider>
+      <AnnouncementProvider>
+        <EventProvider>
+          <CalendarProvider>
+            <div className="min-h-screen bg-white">
+              <UniversityHeader
+                onLoginToggle={handleLoginToggle}
+                isLoggedIn={isLoggedIn}
+                userType={userType || undefined}
+                userName={userData?.name}
+              />
+              <main>
+                {isLoggedIn && userType === 'admin' ? (
+                  <AdminDashboard />
+                ) : isLoggedIn && userType === 'faculty' ? (
+                  <FacultyDashboard userData={userData} />
+                ) : (
+                  <>
+                    <HeroSection />
+                    <ProgramsSection />
+                    <CampusSection />
+                    <DepartmentsSection />
+                    <FacultySection />
+                    <AnnouncementsSection />
+                    <EventsSection />
+                  </>
+                )}
+              </main>
+              {!isLoggedIn && <Footer />}
+              {!isLoggedIn && <FAQChatbot />}
+              <Toaster />
+            </div>
+          </CalendarProvider>
+        </EventProvider>
+      </AnnouncementProvider>
+    </FacultyProvider>
   );
 }

@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Eye, EyeOff, Lock, User, Shield, GraduationCap, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useFaculty } from "../context/FacultyContext";
 
 interface UnifiedLoginProps {
   onLogin: (success: boolean, userType: 'admin' | 'faculty', userData?: any) => void;
@@ -33,6 +34,7 @@ const CREDENTIALS = {
 };
 
 export default function UnifiedLogin({ onLogin, onBack }: UnifiedLoginProps) {
+  const { faculty } = useFaculty();
   const [formData, setFormData] = useState({
     userType: "" as 'admin' | 'faculty' | '',
     username: "",
@@ -56,21 +58,33 @@ export default function UnifiedLogin({ onLogin, onBack }: UnifiedLoginProps) {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const targetCredentials = CREDENTIALS[formData.userType];
-    
-    if (
-      formData.username === targetCredentials.username &&
-      formData.password === targetCredentials.password
-    ) {
-      const successMessage = formData.userType === 'admin' 
-        ? "Welcome to the admin dashboard!" 
-        : "Welcome to your faculty dashboard!";
-      
-      toast.success(successMessage);
-      onLogin(true, formData.userType, targetCredentials);
-    } else {
-      setError("Invalid username or password. Please try again.");
-      toast.error("Login failed. Please check your credentials.");
+    if (formData.userType === 'admin') {
+      // Admin login with hardcoded credentials
+      const adminCredentials = CREDENTIALS.admin;
+      if (
+        formData.username === adminCredentials.username &&
+        formData.password === adminCredentials.password
+      ) {
+        toast.success("Welcome to the admin dashboard!");
+        onLogin(true, 'admin', adminCredentials);
+      } else {
+        setError("Invalid username or password. Please try again.");
+        toast.error("Login failed. Please check your credentials.");
+      }
+    } else if (formData.userType === 'faculty') {
+      // Faculty login using faculty context data
+      const facultyMember = faculty.find(f =>
+        f.email === formData.username &&
+        (formData.password === "faculty123" || formData.password === f.lastName.toLowerCase() + "123")
+      );
+
+      if (facultyMember) {
+        toast.success(`Welcome, ${facultyMember.firstName} ${facultyMember.lastName}!`);
+        onLogin(true, 'faculty', facultyMember);
+      } else {
+        setError("Invalid email or password. Please check your credentials.");
+        toast.error("Login failed. Please check your credentials.");
+      }
     }
 
     setIsLoading(false);
@@ -114,24 +128,7 @@ export default function UnifiedLogin({ onLogin, onBack }: UnifiedLoginProps) {
     }
   };
 
-  const getCredentialsDemo = () => {
-    if (formData.userType === 'admin') {
-      return (
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p><strong>Username:</strong> admin</p>
-          <p><strong>Password:</strong> sorsu2024</p>
-        </div>
-      );
-    } else if (formData.userType === 'faculty') {
-      return (
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p><strong>Username:</strong> faculty</p>
-          <p><strong>Password:</strong> faculty123</p>
-        </div>
-      );
-    }
-    return <p className="text-xs text-muted-foreground">Select user type to see demo credentials</p>;
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
@@ -208,12 +205,13 @@ export default function UnifiedLogin({ onLogin, onBack }: UnifiedLoginProps) {
                   <Input
                     id="username"
                     type="text"
-                    placeholder={formData.userType === 'faculty' ? 'Enter your faculty ID' : 'Enter your username'}
+                    placeholder=""
                     value={formData.username}
                     onChange={(e) => handleInputChange("username", e.target.value)}
                     className="pl-10"
                     required
                     disabled={isLoading}
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -225,12 +223,13 @@ export default function UnifiedLogin({ onLogin, onBack }: UnifiedLoginProps) {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder=""
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
                     className="pl-10 pr-10"
                     required
                     disabled={isLoading}
+                    autoComplete="off"
                   />
                   <Button
                     type="button"
@@ -264,14 +263,6 @@ export default function UnifiedLogin({ onLogin, onBack }: UnifiedLoginProps) {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials Info */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground text-center mb-2">
-                Demo Credentials:
-              </p>
-              {getCredentialsDemo()}
-            </div>
 
             <div className="mt-6 text-center">
               <p className="text-xs text-muted-foreground">

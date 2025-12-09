@@ -33,98 +33,62 @@ interface FacultyContextType {
 
 const FacultyContext = createContext<FacultyContextType | undefined>(undefined);
 
-// Default mock data
+// Default mock data - Initial faculty members
 const defaultFaculty: Faculty[] = [
   {
     id: "1",
-    firstName: "Dr. Sarah",
-    lastName: "Johnson",
-    email: "s.johnson@university.edu",
-    phone: "(555) 123-4567",
-    office: "Science Building 301",
-    department: "Computer Science",
-    title: "Professor",
-    status: "Active",
-    bio: "Dr. Johnson specializes in artificial intelligence and machine learning research with over 15 years of experience in the field.",
-    specializations: ["Artificial Intelligence", "Machine Learning", "Data Science"],
-    education: ["Ph.D. Computer Science - MIT", "M.S. Computer Science - Stanford"],
-    awards: ["Excellence in Teaching Award 2023", "Research Innovation Grant 2022"],
-    officeHours: "Mon/Wed 2-4 PM",
-    website: "https://cs.university.edu/faculty/johnson",
-    researchInterests: ["AI", "Machine Learning", "Data Science"],
-    yearsOfExperience: 15
-  },
-  {
-    id: "2",
-    firstName: "Prof. Michael",
-    lastName: "Chen",
-    email: "m.chen@university.edu",
-    phone: "(555) 234-5678",
-    office: "Business Building 205",
-    department: "Business Administration",
-    title: "Associate Professor",
-    status: "Active",
-    bio: "Professor Chen focuses on international business strategy and has consulted for Fortune 500 companies worldwide.",
-    specializations: ["International Business", "Strategic Management", "Corporate Finance"],
-    education: ["Ph.D. Business Administration - Harvard", "MBA - Wharton"],
-    awards: ["Outstanding Faculty Award 2021"],
-    officeHours: "Tue/Thu 1-3 PM",
-    researchInterests: ["International Business", "Strategy"],
-    yearsOfExperience: 12
-  },
-  {
-    id: "3",
-    firstName: "Dr. Emily",
-    lastName: "Rodriguez",
-    email: "e.rodriguez@university.edu",
-    phone: "(555) 345-6789",
-    office: "Arts Building 102",
-    department: "Psychology",
+    firstName: "Kenneth",
+    lastName: "Gisalan",
+    email: "kenneth.gisalan@sorsu-bulan.edu.ph",
+    phone: "+63 919 345 6789",
+    office: "Engineering Building, Room 203",
+    department: "Information Technology",
     title: "Assistant Professor",
     status: "Active",
-    bio: "Dr. Rodriguez researches cognitive psychology and human behavior, with a focus on memory and learning processes.",
-    specializations: ["Cognitive Psychology", "Memory Research", "Learning Sciences"],
-    education: ["Ph.D. Psychology - UCLA", "M.A. Psychology - UC Berkeley"],
-    awards: [],
-    officeHours: "Currently on sabbatical",
-    researchInterests: ["Cognitive Psychology", "Memory"],
+    bio: "Prof. Gisalan is an IT expert specializing in cybersecurity, network administration, and software development. He brings industry experience to the classroom and is passionate about preparing students for the digital workforce.",
+    specializations: ["Information Technology", "Cybersecurity", "Network Administration", "Software Development"],
+    education: [
+      "M.S. in Information Technology, University of the Philippines Diliman",
+      "B.S. in Computer Science, Ateneo de Manila University"
+    ],
+    awards: [
+      "Outstanding IT Educator Award 2023",
+      "Best Cybersecurity Research Paper 2022"
+    ],
+    officeHours: "Tue/Thu 2-4 PM",
+    researchInterests: ["Cybersecurity", "Network Security", "Cloud Computing", "Digital Forensics"],
     yearsOfExperience: 8
   },
   {
-    id: "4",
-    firstName: "Dr. Maria Elena",
-    lastName: "Santos",
-    email: "me.santos@sorsu-bulan.edu.ph",
-    phone: "+63 917 123 4567",
-    office: "Engineering Building, Room 201",
-    department: "College of Engineering and Technology",
-    title: "Dean",
+    id: "2",
+    firstName: "Sean Martin",
+    lastName: "Fulay",
+    email: "sean.fulay@sorsu-bulan.edu.ph",
+    phone: "+63 917 888 5566",
+    office: "Engineering Building, Room 204",
+    department: "Information Technology",
+    title: "IT Specialist Instructor",
     status: "Active",
-    bio: "Dr. Santos has over 20 years of experience in civil engineering and academia. She has led numerous infrastructure projects in Bicol Region and is passionate about sustainable engineering practices.",
-    specializations: ["Civil Engineering", "Structural Engineering", "Project Management"],
-    education: ["Ph.D. in Civil Engineering, University of the Philippines Diliman"],
-    awards: ["Outstanding Engineering Educator Award 2022", "Best Research Paper in Structural Engineering 2021", "CHED Outstanding Faculty Award 2020"],
-    officeHours: "Mon-Fri 9-5 PM",
-    researchInterests: ["Earthquake-resistant structures", "Sustainable building materials", "Infrastructure development"],
-    yearsOfExperience: 20
-  },
-  {
-    id: "5",
-    firstName: "Prof. Roberto",
-    lastName: "dela Cruz",
-    email: "r.delacruz@sorsu-bulan.edu.ph",
-    phone: "+63 918 234 5678",
-    office: "Engineering Building, Room 105",
-    department: "College of Engineering and Technology",
-    title: "Program Chair",
-    status: "Active",
-    bio: "Prof. dela Cruz is a technology enthusiast with expertise in software development and AI. He has mentored hundreds of students in programming and system development.",
-    specializations: ["Computer Science", "Software Engineering", "Artificial Intelligence"],
-    education: ["M.S. in Computer Science, Ateneo de Manila University"],
-    awards: ["Best IT Faculty Award 2023", "Innovation in Teaching Award 2022", "Outstanding Alumni Award - Ateneo de Manila 2021"],
-    officeHours: "Mon/Wed/Fri 10-12 PM",
-    researchInterests: ["Machine Learning", "Web Development", "Mobile Applications", "Database Systems"],
-    yearsOfExperience: 15
+    bio: "Mr. Fulay is an IT specialist with strong expertise in software development, system administration, and emerging technologies. He is dedicated to helping students build practical technical skills aligned with industry standards.",
+    specializations: [
+      "Software Development",
+      "IT Infrastructure",
+      "Network Systems",
+      "Database Management"
+    ],
+    education: [
+      "B.S. in Information Technology, Sorsogon State University",
+      "Cisco Networking Certification (CCNA)"
+    ],
+    awards: ["Excellence in IT Instruction Award 2024"],
+    officeHours: "Mon/Wed/Fri 1-3 PM",
+    researchInterests: [
+      "IT Infrastructure",
+      "Web Development",
+      "Cloud Services",
+      "Systems Administration"
+    ],
+    yearsOfExperience: 5
   }
 ];
 
@@ -132,11 +96,13 @@ const STORAGE_KEY = 'university_faculty_data';
 
 export function FacultyProvider({ children }: { children: ReactNode }) {
   const [faculty, setFaculty] = useState<Faculty[]>(() => {
-    // Load from localStorage or use default
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (error) {
       console.error('Error loading faculty data from localStorage:', error);

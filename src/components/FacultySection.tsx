@@ -6,7 +6,10 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import {
   Search,
   Mail,
   Phone,
@@ -15,9 +18,13 @@ import {
   Award,
   Building,
   User,
-  Users
+  Users,
+  Edit,
+  Save,
+  Camera
 } from "lucide-react";
 import { useFaculty, facultyToStudentView } from "../context/FacultyContext";
+import { toast } from "sonner";
 
 // Student view interface
 interface FacultyView {
@@ -107,21 +114,41 @@ export default function FacultySection() {
 
   const filteredFaculty = useMemo(() => {
     return studentViewFaculty
-      .filter(faculty => {
+      .filter((faculty: FacultyView) => {
         const matchesSearch = faculty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             faculty.specialization.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                             faculty.specialization.some((spec: string) => spec.toLowerCase().includes(searchTerm.toLowerCase())) ||
                              faculty.department.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesDepartment = filterDepartment === "All Departments" || faculty.department === filterDepartment;
         const matchesPosition = filterPosition === "All Positions" || faculty.position === filterPosition;
-        
+
         return matchesSearch && matchesDepartment && matchesPosition;
       })
-      .sort((a, b) => {
+      .sort((a: FacultyView, b: FacultyView) => {
+        // Custom sorting for Information Technology department
+        const aIsIT = a.department.toLowerCase() === "information technology";
+        const bIsIT = b.department.toLowerCase() === "information technology";
+
+        if (aIsIT && !bIsIT) return -1; // IT faculty first
+        if (!aIsIT && bIsIT) return 1; // IT faculty first
+
+        if (aIsIT && bIsIT) {
+          // Within IT department: Sean Martin first, then Kenneth, then other IT faculty
+          const aIsSean = a.name === "Sean Martin Fulay";
+          const bIsSean = b.name === "Sean Martin Fulay";
+          const aIsKenneth = a.name === "Kenneth Gisalan";
+          const bIsKenneth = b.name === "Kenneth Gisalan";
+
+          if (aIsSean && !bIsSean) return -1;
+          if (bIsSean && !aIsSean) return 1;
+          if (aIsKenneth && !bIsKenneth) return -1;
+          if (bIsKenneth && !aIsKenneth) return 1;
+        }
+
         // Sort by position hierarchy, then by name
         const positionOrder = ["Dean", "Associate Dean", "Program Chair", "Professor", "Associate Professor", "Assistant Professor", "Lecturer", "Instructor"];
         const aPos = positionOrder.indexOf(a.position);
         const bPos = positionOrder.indexOf(b.position);
-        
+
         if (aPos !== bPos) return aPos - bPos;
         return a.name.localeCompare(b.name);
       });

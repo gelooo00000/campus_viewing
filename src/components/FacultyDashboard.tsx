@@ -7,17 +7,18 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Edit, 
-  Save, 
-  Camera, 
+import {
+  User,
+  Mail,
+  Phone,
+  Edit,
+  Save,
+  Camera,
   GraduationCap,
   Building
 } from "lucide-react";
 import { toast } from "sonner";
+import { useFaculty } from "../context/FacultyContext";
 
 interface FacultyProfile {
   id: string;
@@ -35,30 +36,75 @@ interface FacultyProfile {
   website?: string;
 }
 
-export default function FacultyDashboard() {
+interface FacultyDashboardProps {
+  userData?: any;
+}
+
+export default function FacultyDashboard({ userData }: FacultyDashboardProps) {
+  const { updateFaculty } = useFaculty();
   const [isEditing, setIsEditing] = useState(false);
-  
-  const [profile, setProfile] = useState<FacultyProfile>({
-    id: "FAC001",
-    firstName: "Juan",
-    lastName: "Dela Cruz",
-    email: "j.delacruz@sorsu-bulan.edu.ph",
-    phone: "+63 917 123 4567",
-    department: "Computer Science",
-    title: "Associate Professor",
-    bio: "Dr. Juan Dela Cruz is an Associate Professor in the Computer Science Department with over 10 years of teaching experience. He specializes in Data Structures, Algorithms, and Machine Learning.",
-    office: "CS Building, Room 201",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    specializations: ["Data Structures", "Algorithms", "Machine Learning", "Database Systems"],
-    officeHours: "Mon/Wed 2-4 PM",
-    website: ""
+
+  // Initialize profile from userData
+  const [profile, setProfile] = useState<FacultyProfile>(() => {
+    if (userData) {
+      // Map userData to FacultyProfile format
+      return {
+        id: userData.id || "FAC001",
+        firstName: userData.firstName || userData.name?.split(' ')[0] || "Unknown",
+        lastName: userData.lastName || userData.name?.split(' ')[1] || "User",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        department: userData.department || "",
+        title: userData.title || userData.position || "",
+        bio: userData.bio || `Welcome to ${userData.firstName || userData.name?.split(' ')[0] || "Faculty"}'s profile.`,
+        office: userData.office || userData.officeLocation || "",
+        photo: userData.profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+        specializations: userData.specializations || userData.researchInterests || [],
+        officeHours: userData.officeHours || "",
+        website: userData.website || ""
+      };
+    }
+    return {
+      id: "FAC001",
+      firstName: "Unknown",
+      lastName: "User",
+      email: "",
+      phone: "",
+      department: "",
+      title: "",
+      bio: "",
+      office: "",
+      photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      specializations: [],
+      officeHours: "",
+      website: ""
+    };
   });
+
+  // Allow all faculty to edit their profiles (remove restriction to only Kenneth and Sean)
+  const canEdit = true;
 
   const [newSpecialization, setNewSpecialization] = useState("");
 
   const handleProfileUpdate = () => {
     if (isEditing) {
-      // Save the profile
+      // Save the profile to the faculty context
+      const updatedData = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        phone: profile.phone,
+        department: profile.department,
+        title: profile.title,
+        bio: profile.bio,
+        office: profile.office,
+        specializations: profile.specializations,
+        officeHours: profile.officeHours,
+        website: profile.website,
+        profileImage: profile.photo
+      };
+
+      updateFaculty(profile.id, updatedData);
       toast.success("Profile updated successfully!");
       setIsEditing(false);
     } else {
@@ -133,7 +179,7 @@ export default function FacultyDashboard() {
                       {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  {isEditing && (
+                  {isEditing && canEdit && (
                     <Button variant="outline" size="sm" className="flex items-center gap-2">
                       <Camera className="w-4 h-4" />
                       Change Photo
